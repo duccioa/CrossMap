@@ -36,44 +36,44 @@ def rightmove_webscrape(rightmove_url, rent_or_buy, dest_folder):
     xp_date = '//span[@class="propertyCard-branchSummary-addedOrReduced"]/text()'
 
     # Start the loop through the search result web pages
-    try:
+    #try:
         # Get the start & end of the web url around the index value
-        start, end = rightmove_url.split('&index=')
-        url_start = start + '&index='
-        url_end = end[1:]
-        for pages in range(0, loop_count, 1):
-            url = url_start + str(pages * 24) + url_end
-            page = requests.get(url)
-            tree = html.fromstring(page.content)
-    except ValueError:
-        page = requests.get(rightmove_url)
+        #start, end = rightmove_url.split('&index=')
+        #url_start = start + '&index='
+        #url_end = end[1:]
+    for pages in range(0, loop_count, 1):
+        url = rightmove_url +'&index=' + str(pages * 24)
+        page = requests.get(url)
         tree = html.fromstring(page.content)
+   # except ValueError:
+   #     page = requests.get(rightmove_url)
+    #    tree = html.fromstring(page.content)
 
-    # Reset variables
-    price_pcm, titles, addresses, weblinks, date = [], [], [], [], []
+        # Reset variables
+        price_pcm, titles, addresses, weblinks, date = [], [], [], [], []
 
-    # Create data lists from Xpaths
-    for val in tree.xpath(xp_prices):
-        price_pcm.append(val)
-    for val in tree.xpath(xp_titles):
-        titles.append(val)
-    for val in tree.xpath(xp_addresses):
-        addresses.append(val)
-    for val in tree.xpath(xp_weblinks):
-        weblinks.append('http://www.rightmove.co.uk' + val)
-    for val in tree.xpath(xp_date):
-        date.append(val)
+        # Create data lists from Xpaths
+        for val in tree.xpath(xp_prices):
+            price_pcm.append(val)
+        for val in tree.xpath(xp_titles):
+            titles.append(val)
+        for val in tree.xpath(xp_addresses):
+            addresses.append(val)
+        for val in tree.xpath(xp_weblinks):
+            weblinks.append('http://www.rightmove.co.uk' + val)
+        for val in tree.xpath(xp_date):
+            date.append(val)
 
-    # Convert data to temporary DataFrame
-    data = [price_pcm, titles, addresses, weblinks, date]
-    temp_df = pd.DataFrame(data)
-    temp_df = temp_df.transpose()
-    temp_df.columns = ['price', 'type', 'address', 'url', 'ad_date']
+        # Convert data to temporary DataFrame
+        data = [price_pcm, titles, addresses, weblinks, date]
+        temp_df = pd.DataFrame(data)
+        temp_df = temp_df.transpose()
+        temp_df.columns = ['price', 'type', 'address', 'url', 'ad_date']
 
-    # Drop empty rows from DataFrame which come from placeholders in rightmove html
-    if len(temp_df) > 0:  # This condition is required because rightmove tells you it has more results than it returns, and the below will error if temp_df is empty
-        temp_df = temp_df[temp_df.url != 'http://www.rightmove.co.uk' + '/property-for-sale/property-0.html']
-    # Join temporary DataFrame to main results DataFrame
+        # Drop empty rows from DataFrame which come from placeholders in rightmove html
+        if len(temp_df) > 0:  # This condition is required because rightmove tells you it has more results than it returns, and the below will error if temp_df is empty
+            temp_df = temp_df[temp_df.url != 'http://www.rightmove.co.uk' + '/property-for-sale/property-0.html']
+        # Join temporary DataFrame to main results DataFrame
         frames = [df, temp_df]
         df = pd.concat(frames)
 
@@ -109,8 +109,8 @@ def rightmove_webscrape(rightmove_url, rent_or_buy, dest_folder):
 
 
 
-rightmove_url = 'http://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=STATION%5E1754&radius=0.5&propertyTypes=bungalow%2Cdetached%2Cflat%2Csemi-detached%2Cterraced&includeLetAgreed=false&areaSizeUnit=sqm'
-rightmove_url = 'http://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=REGION%5E87490&numberOfPropertiesPerPage=24&radius=0.0&sortType=6&index=0&propertyTypes=detached%2Csemi-detached%2Cterraced%2Cflat%2Cbungalow&maxDaysSinceAdded=7&includeSSTC=false&viewType=LIST&areaSizeUnit=sqft&currencyCode=GBP'
+rightmove_url = 'http://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=STATION%5E1754&radius=0.5&propertyTypes=bungalow%2Cdetached%2Cflat%2Csemi-detached%2Cterraced&includeSSTC=true&includeLetAgreed=false&dontShow=retirement&areaSizeUnit=sqm'
+rightmove_url = 'http://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=REGION%5E93965&propertyTypes=bungalow%2Cdetached%2Cflat%2Csemi-detached%2Cterraced&includeSSTC=true&includeLetAgreed=false&dontShow=retirement&areaSizeUnit=sqm'
 
 data_folder = '/Users/duccioa/CLOUD/01_Cloud/01_Work/04_Projects/0031_CrossMap/05_Data/'
 
