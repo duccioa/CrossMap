@@ -3,11 +3,15 @@
 #importlib.reload(rm)
 # !/usr/bin/env python
 
-def rightmove_webscrape(rightmove_url, rent_or_buy, dest_folder):
+def rightmove_webscrape(rightmove_url, rent_or_buy, dest_folder, location):
     # imports
     from lxml import html
     import requests
     import pandas as pd
+    pd.set_option('display.height', 1000)
+    pd.set_option('display.max_rows', 500)
+    pd.set_option('display.max_columns', 500)
+    pd.set_option('display.width', 1000)
     import datetime as dt
 
     # Initialise a pandas DataFrame to store the results
@@ -50,7 +54,7 @@ def rightmove_webscrape(rightmove_url, rent_or_buy, dest_folder):
     #    tree = html.fromstring(page.content)
 
         # Reset variables
-        price_pcm, titles, addresses, weblinks, date = [], [], [], [], []
+        price_pcm, titles, addresses, weblinks, date , loc= [], [], [], [], [], []
 
         # Create data lists from Xpaths
         for val in tree.xpath(xp_prices):
@@ -63,6 +67,7 @@ def rightmove_webscrape(rightmove_url, rent_or_buy, dest_folder):
             weblinks.append('http://www.rightmove.co.uk' + val)
         for val in tree.xpath(xp_date):
             date.append(val)
+            loc.append(location)
 
         # Convert data to temporary DataFrame
         data = [price_pcm, titles, addresses, weblinks, date]
@@ -85,39 +90,49 @@ def rightmove_webscrape(rightmove_url, rent_or_buy, dest_folder):
     df.price.replace(regex=True, inplace=True, to_replace=r'\D', value=r'')
     print(df.head())  # DEBUG
     df.price = pd.to_numeric(df.price)
-    print(df.head())  # DEBUG
     # Extract postcode stems to a separate column
     df['postcode'] = df['address'].str.extract(r'\b([A-Za-z][A-Za-z]?[0-9][0-9]?[A-Za-z]?)\b', expand=True)
 
     # Extract number of bedrooms from 'type' to a separate column
     df['number_bedrooms'] = df.type.str.extract(r'\b([\d][\d]?)\b', expand=True)
     df.loc[df['type'].str.contains('studio', case=False, na=False), 'number_bedrooms'] = 0
-
+    if df.loc[df['type'].str.contains('house', case=False, na='NaN'), 'type'] == ''
     # Add in search_date column to record the date the search was run (i.e. today's date)
     now = dt.datetime.today().strftime("%d/%m/%Y")
     df['search_date'] = now
 
     # Export the results to CSV
-    csv_filename = dest_folder + 'rightmove_' + rent_or_buy + '_results_' + str(
-        dt.datetime.today().strftime("%Y_%m_%d %H %M %S")) + '.csv'
+    csv_filename = dest_folder + 'rightmove__' + location + '_' + rent_or_buy + '_results_' + str(
+        dt.datetime.today().strftime("%Y-%m-%d_%H:%M:%S")) + '.csv'
     df.to_csv(csv_filename, encoding='utf-8')
 
     # Print message to validate search has run showing number of results received and name of csv file.
+    print(df.head())
+    print(df.describe)
     print(len(df), 'results saved as \'', csv_filename, '\'')
 
     return df
 
 
-
-rightmove_url = 'http://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=STATION%5E1754&radius=0.5&propertyTypes=bungalow%2Cdetached%2Cflat%2Csemi-detached%2Cterraced&includeSSTC=true&includeLetAgreed=false&dontShow=retirement&areaSizeUnit=sqm'
-rightmove_url = 'http://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=REGION%5E93965&propertyTypes=bungalow%2Cdetached%2Cflat%2Csemi-detached%2Cterraced&includeSSTC=true&includeLetAgreed=false&dontShow=retirement&areaSizeUnit=sqm'
-
+# Fetch data for
+search_location = "canons park station"
+# Radius = 0.5 miles
+# Types  = bungalow, detached, flat, semi-detached, terraced
+# Include sold and under offer = True
+# Added to the site = anytime
+rightmove_url = 'http://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=STATION%5E1754&radius=0.5&propertyTypes=bungalow%2Cdetached%2Cflat%2Csemi-detached%2Cterraced&includeSSTC=true&includeLetAgreed=false&areaSizeUnit=sqm'
+# Save in
 data_folder = '/Users/duccioa/CLOUD/01_Cloud/01_Work/04_Projects/0031_CrossMap/05_Data/'
 
-df = rightmove_webscrape(rightmove_url,'buy', data_folder)
+df = rightmove_webscrape(rightmove_url,'buy', data_folder, search_location)
 m = df['price'].median()
 s = df.groupby(['number_bedrooms'])['price'].median()
 
 ss = []
 for i in range(0,len(s)):
     ss.append(s[i]/int(s.index[i]))
+
+search_location = 'islington'
+rightmove_url = 'http://www.rightmove.co.uk/property-for-sale/find.html?locationIdentifier=REGION%5E93965&propertyTypes=bungalow%2Cdetached%2Cflat%2Csemi-detached%2Cterraced%2Cland%2Cpark-home&includeSSTC=true&includeLetAgreed=false&areaSizeUnit=sqm'
+
+df_islington = rightmove_webscrape(rightmove_url,'buy', data_folder, search_location)
