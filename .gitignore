@@ -48,5 +48,7 @@ vignettes/*.pdf
 04_Admin/
 05_Data/
 06_Web/
+02_Code/Python/env
 
 
+.Rproj.user
