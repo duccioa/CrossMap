@@ -153,3 +153,8 @@ output = output[:-2]+ \
 
 with open(target_folder + "df_to_carto_test.json", "w") as file:
     file.write(output)
+
+
+
+
+### Nothing to do with the project
